@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu vois ce que je veux dire</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<div id="screen-accueil">
+  <canvas id="pixel-canvas"></canvas>
+  <div id="content">
+    <img src="./assets/LOGO.svg" class="logo-img" alt="Tu vois ce que je veux dire">
+  </div>
+  <div id="swipe" onclick="showFeed()" role="button" aria-label="Commencer l'expérience">
+    <span>START</span>
+    <div class="chevron"></div>
+  </div>
+</div>
+
+<div id="screen-feed">
+
+  <!-- VOIR1 -->
+  <div class="slide" id="slide-0">
+    <div class="video-zone tiktok-slide">
+      <video src="./assets/voir_content_1.mp4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay"></div>
+      <div class="info">
+        <div class="username">@emmanuelmacron</div>
+        <div class="caption">Une immense fierté de partager ces moments avec nos militaires. Très belles fêtes à vous.</div>
+        <div class="music-row">
+          <span class="music-icon"><img src="./assets/MUSIQUE.svg" width="15" height="17" alt=""></span>
+          <span class="music-text">son original - Emmanuel Macron</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="action-item">
+          <img src="./assets/pp_macron.jpg" alt="Profil" style="width:48px;height:48px;border-radius:50%;border:2px solid #fff;object-fit:cover;display:block;">
+        </div>
+        <div class="action-item" onclick="toggleLike(this)">
+          <span class="action-icon heart-icon"><img src="./assets/LIKE.svg" width="32" height="28" alt="Like"></span>
+          <span class="count">318,2K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/COMMENT.svg" width="30" height="36" alt="Commentaires"></span>
+          <span class="count">18,5K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/SHARE.svg" width="22" height="25" alt="Partager"></span>
+          <span class="count">4103</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOIR2 -->
+  <div class="slide" id="slide-1">
+    <div class="video-zone tiktok-slide">
+      <video src="./assets/voir_content_2.MP4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay"></div>
+      <div class="info">
+        <div class="username">@jordanbardella</div>
+        <div class="caption">✌️🇫🇷</div>
+        <div class="music-row">
+          <span class="music-icon"><img src="./assets/MUSIQUE.svg" width="15" height="17" alt=""></span>
+          <span class="music-text">Contient : melodrama - di...</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="action-item">
+          <img src="./assets/pp_bardella.jpg" alt="Profil" style="width:48px;height:48px;border-radius:50%;border:2px solid #fff;object-fit:cover;display:block;">
+        </div>
+        <div class="action-item" onclick="toggleLike(this)">
+          <span class="action-icon heart-icon"><img src="./assets/LIKE.svg" width="32" height="28" alt="Like"></span>
+          <span class="count">550,9K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/COMMENT.svg" width="30" height="36" alt="Commentaires"></span>
+          <span class="count">24,6K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/SHARE.svg" width="22" height="25" alt="Partager"></span>
+          <span class="count">65,5K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOIR3 -->
+  <div class="slide" id="slide-2">
+    <div class="video-zone tiktok-slide">
+      <video src="./assets/voir_content_3.mp4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay"></div>
+      <div class="info">
+        <div class="username">@lucas.sagace</div>
+        <div class="caption">Contrairement à d'autres il sait parler sans prompteur 😊</div>
+        <div class="music-row">
+          <span class="music-icon"><img src="./assets/MUSIQUE.svg" width="15" height="17" alt=""></span>
+          <span class="music-text">son original - clovmsc</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="action-item">
+          <img src="./assets/pp_none.png" alt="Profil" style="width:48px;height:48px;border-radius:50%;border:2px solid #fff;object-fit:cover;display:block;">
+        </div>
+        <div class="action-item" onclick="toggleLike(this)">
+          <span class="action-icon heart-icon"><img src="./assets/LIKE.svg" width="32" height="28" alt="Like"></span>
+          <span class="count">14,7K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/COMMENT.svg" width="30" height="36" alt="Commentaires"></span>
+          <span class="count">2168</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/SHARE.svg" width="22" height="25" alt="Partager"></span>
+          <span class="count">1.2K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROIRE1 -->
+  <div class="slide" id="slide-3">
+    <div class="video-zone tiktok-slide croire-video-slide">
+      <video src="./assets/croire_content_1.mp4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay"></div>
+      <div class="info">
+        <div class="username">@emmanuelmacron</div>
+        <div class="caption">L'Europe en danger ? Oui, mais nous pouvons agir.</div>
+        <div class="music-row">
+          <span class="music-icon"><img src="./assets/MUSIQUE.svg" width="15" height="17" alt=""></span>
+          <span class="music-text">son original - Emmanuel Macron</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="action-item">
+          <img src="./assets/pp_macron.jpg" alt="Profil" style="width:48px;height:48px;border-radius:50%;border:2px solid #fff;object-fit:cover;display:block;">
+        </div>
+        <div class="action-item" onclick="toggleLike(this)">
+          <span class="action-icon heart-icon"><img src="./assets/LIKE.svg" width="32" height="28" alt="Like"></span>
+          <span class="count">14,7K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/COMMENT.svg" width="30" height="36" alt="Commentaires"></span>
+          <span class="count">2168</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/SHARE.svg" width="22" height="25" alt="Partager"></span>
+          <span class="count">1.2K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROIRE2 -->
+  <div class="slide" id="slide-4">
+    <div class="video-zone croire-clean-slide">
+      <video src="./assets/croire_content_2.mp4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay croire-overlay"></div>
+
+      <section id="croire-section" class="croire-section">
+        <div class="croire-stage">
+          <button class="hotspot hotspot-1" data-title="Éclairage" data-text="Le parapluie est destiné à gérer la lumière. Il transforme une source lumineuse intense en une lumière douce et homogène, idéale pour les portraits et les prises de vue en mobilité." data-image="./assets/LIGHT.png" aria-label="Ouvrir la fiche éclairage">
+            <img src="./assets/LIGHT.png" alt="Éclairage">
+          </button>
+
+          <button class="hotspot hotspot-2" data-title="Community manager" data-text="L’image est ici retravaillée pour produire un effet visuel immédiat. Le traitement donne une sensation plus dramatique, étrange, presque irréelle." data-image="./assets/CM.png" aria-label="Ouvrir la fiche community manager">
+            <img src="./assets/CM.png" alt="Community manager">
+          </button>
+
+          <button class="hotspot hotspot-3" data-title="Responsable communication" data-text="La composition de l’image n’est pas neutre. Le cadrage, l’arrière-plan et la posture participent à construire un récit et à orienter la lecture." data-image="./assets/RC.png" aria-label="Ouvrir la fiche responsable communication">
+            <img src="./assets/RC.png" alt="Responsable communication">
+          </button>
+
+          <button class="hotspot hotspot-4" data-title="Tiktok" data-text="Le téléphone visible dans l’image rappelle le rôle central des réseaux sociaux : cadrer, diffuser, recontextualiser et parfois déformer le message." data-image="./assets/PHONE.png" aria-label="Ouvrir la fiche téléphone">
+            <img src="./assets/PHONE.png" alt="Téléphone">
+          </button>
+
+          <button class="hotspot hotspot-5" data-title="Script" data-text="Le texte affiché ou suggéré autour de l’image influence la réception. L’image seule ne suffit pas : elle est presque toujours accompagnée d’un cadre narratif." data-image="./assets/SCRIPT.png" aria-label="Ouvrir la fiche script">
+            <img src="./assets/SCRIPT.png" alt="Script">
+          </button>
+
+          <p class="slide-helper slide-helper--bottom">Clique sur les éléments</p>
+
+          <div class="info-panel" id="infoPanel" aria-hidden="true">
+            <button class="close-panel" id="closePanel" aria-label="Fermer">✕</button>
+            <div class="info-panel-frame">
+              <div class="info-panel-top">
+                <div class="info-media">
+                  <img id="panelImage" src="" alt="">
+                </div>
+                <div class="info-copy">
+                  <h2 id="panelTitle">ÉCLAIRAGE</h2>
+                  <p id="panelText">Texte d’exemple.</p>
+                </div>
+              </div>
+              <div class="info-panel-bottom">
+                <p id="panelTextDuplicate">Texte d’exemple.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- RESSENTIR1 -->
+  <div class="slide" id="slide-5">
+    <div class="video-zone tiktok-slide">
+      <video src="./assets/ressentir_content.mp4" loop playsinline preload="metadata"></video>
+      <div class="video-overlay"></div>
+      <div class="info">
+        <div class="username">@gabriel_attal</div>
+        <div class="caption">🔴 JE LEAK LE SUJET DU BAC</div>
+        <div class="music-row">
+          <span class="music-icon"><img src="./assets/MUSIQUE.svg" width="15" height="17" alt=""></span>
+          <span class="music-text">son original - Gabriel Attal</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="action-item">
+          <img src="./assets/pp_attal.jpg" alt="Profil" style="width:48px;height:48px;border-radius:50%;border:2px solid #fff;object-fit:cover;display:block;">
+        </div>
+        <div class="action-item" onclick="toggleLike(this)">
+          <span class="action-icon heart-icon"><img src="./assets/LIKE.svg" width="32" height="28" alt="Like"></span>
+          <span class="count">140.7K</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/COMMENT.svg" width="30" height="36" alt="Commentaires"></span>
+          <span class="count">1048</span>
+        </div>
+        <div class="action-item">
+          <span class="action-icon"><img src="./assets/SHARE.svg" width="22" height="25" alt="Partager"></span>
+          <span class="count">1.2K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESSENTIR2 -->
+  <div class="slide ressentir-slide" id="slide-6">
+    <div class="ressentir-bg-layer">
+      <video class="ressentir-bg-video" muted loop playsinline preload="metadata">
+        <source src="./assets/ressentir_content.mp4" type="video/mp4">
+      </video>
+      <div class="ressentir-purple-overlay"></div>
+    </div>
+    <div class="ressentir-content">
+      <h2 class="ressentir-title">QU’EST CE TU RESSENS FACE À CETTE VIDÉO ?</h2>
+      <div class="ressentir-options" data-question="emotion" data-mode="multiple">
+        <button class="ressentir-option" type="button">COLÈRE</button>
+        <button class="ressentir-option" type="button">FIERTÉ</button>
+        <button class="ressentir-option" type="button">AMUSEMENT</button>
+        <button class="ressentir-option" type="button">INDIGNATION</button>
+        <button class="ressentir-option" type="button">INDIFFÉRENCE</button>
+      </div>
+      <button class="ressentir-continue" type="button" disabled>Continuer</button>
+      <p class="ressentir-helper">Sélectionne une ou plusieurs réponses</p>
+    </div>
+  </div>
+
+  <!-- RESSENTIR3 -->
+  <div class="slide ressentir-slide" id="slide-7">
+    <div class="ressentir-bg-layer">
+      <video class="ressentir-bg-video" muted loop playsinline preload="metadata">
+        <source src="./assets/ressentir_content.mp4" type="video/mp4">
+      </video>
+      <div class="ressentir-purple-overlay"></div>
+    </div>
+    <div class="ressentir-content">
+      <h2 class="ressentir-title">PENSES-TU QUE CETTE ÉMOTION ÉTAIT RECHERCHÉE ?</h2>
+      <div class="ressentir-options" data-question="intention" data-mode="single">
+        <button class="ressentir-option" type="button">OUI</button>
+        <button class="ressentir-option" type="button">JE NE SAIS PAS</button>
+        <button class="ressentir-option" type="button">NON</button>
+      </div>
+      <button class="ressentir-continue" type="button" disabled>Continuer</button>
+      <p class="ressentir-helper">Sélectionne une réponse</p>
+    </div>
+  </div>
+
+  <!-- RESSENTIR4 -->
+  <div class="slide ressentir-slide" id="slide-8">
+    <div class="ressentir-bg-layer">
+      <video class="ressentir-bg-video" muted loop playsinline preload="metadata">
+        <source src="./assets/ressentir_content.mp4" type="video/mp4">
+      </video>
+      <div class="ressentir-purple-overlay"></div>
+    </div>
+    <div class="ressentir-content">
+      <h2 class="ressentir-title">QU’EST-CE QUE CETTE VIDÉO CHERCHE À PRODUIRE CHEZ TOI ?</h2>
+      <div class="ressentir-options" data-question="objectif" data-mode="multiple">
+        <button class="ressentir-option" type="button">INFORMER, VULGARISER</button>
+        <button class="ressentir-option" type="button">CRÉER DE LA SYMPATHIE</button>
+        <button class="ressentir-option" type="button">DÉCLENCHER UNE ÉMOTION FORTE</button>
+        <button class="ressentir-option" type="button">FAIRE RÉAGIR / COMMENTER</button>
+        <button class="ressentir-option" type="button">RENFORCER UNE OPINION EXISTANTE</button>
+      </div>
+      <button class="ressentir-continue" type="button" disabled>Continuer</button>
+      <p class="ressentir-helper">Sélectionne une ou plusieurs réponses</p>
+    </div>
+  </div>
+
+  <!-- RESSENTIR5 -->
+  <div class="slide ressentir-slide" id="slide-9">
+    <div class="ressentir-bg-layer">
+      <video class="ressentir-bg-video" muted loop playsinline preload="metadata">
+        <source src="./assets/ressentir_content.mp4" type="video/mp4">
+      </video>
+      <div class="ressentir-purple-overlay"></div>
+    </div>
+    <div class="ressentir-content ressentir-content--explanation">
+      <h2 class="ressentir-title">QU’EST-CE QUE CETTE VIDÉO CHERCHE À PRODUIRE CHEZ TOI ?</h2>
+      <div class="ressentir-text-box">
+        <p>Cette vidéo ne cherche pas seulement à transmettre une information. Elle cherche aussi à produire un effet immédiat sur toi : capter ton attention, provoquer une émotion, te faire réagir ou renforcer une idée déjà présente.</p>
+        <p>Sur les réseaux sociaux, l’émotion est souvent utilisée comme un levier de diffusion. Plus une vidéo fait ressentir quelque chose, plus elle a de chances d’être regardée, partagée ou commentée.</p>
+      </div>
+      <p class="ressentir-helper">Swipe pour continuer</p>
+    </div>
+  </div>
+
+  <!-- FAIRE DIRE -->
+  <div class="slide" id="slide-10">
+    <section class="slide-edit">
+      <main class="editor-page">
+        <header class="top-bar">
+          <button class="top-link" type="button">EDIT</button>
+          <button class="frame-btn" id="editorNextBtn" type="button">SUIVANT</button>
+        </header>
+
+        <section class="editor-layout">
+          <div class="preview-column">
+            <div class="phone-frame">
+              <div class="video-shell">
+                <video id="mainVideo" class="video-player" preload="metadata" playsinline poster="./assets/poster.jpg">
+                  <source src="./assets/dire_content.mp4" type="video/mp4">
+                </video>
+                <div id="subtitleOverlay"></div>
+                <div class="progress-wrap">
+                  <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+                  <div id="timeDisplay" class="time-display">00:00 / 00:15</div>
+                </div>
+              </div>
+            </div>
+              <button id="playPauseBtn" class="play-btn play-btn--icon" type="button" aria-label="Lecture / pause">
+                <img
+                  id="playPauseIcon"
+                  src="./assets/play.svg"
+                  alt="Lecture"
+                  class="play-btn-icon"
+                >
+              </button>          
+              </div>
+
+          <div class="controls-column">
+            <div class="timeline-block">
+              <div class="timeline-box">
+                <button class="timeline-arrow" type="button" id="trimStartMinus">‹</button>
+                <div class="timeline-track-wrap">
+                  <div class="timeline-track" id="timelineTrack">
+                  <div class="trim-window active" id="trimWindow0" data-index="0">
+                    <span class="trim-label">1</span>
+                  </div>
+
+                  <div class="trim-window" id="trimWindow1" data-index="1">
+                    <span class="trim-label">2</span>
+                  </div>
+
+                  <div class="trim-window" id="trimWindow2" data-index="2">
+                    <span class="trim-label">3</span>
+                  </div>
+                </div>
+                </div>
+                <button class="timeline-arrow" type="button" id="trimEndPlus">›</button>
+              </div>
+              <div class="timeline-times">
+                <span id="startTimeLabel">0:00:00</span>
+                <span id="endTimeLabel">0:15:00</span>
+              </div>
+            </div>
+
+            <div class="tools-row tools-row--slots">
+              <button class="tool-btn tool-btn--slot active" type="button" data-panel="trimPanel" aria-label="Couper">
+                <span class="tool-icon-slot"> <img src="./assets/cut.svg" alt=""></span>
+              </button>
+              <button class="tool-btn tool-btn--slot" type="button" data-panel="textPanel" aria-label="Texte">
+                <span class="tool-icon-slot"> <img src="./assets/txt.svg" alt=""></span>
+              </button>
+              <button class="tool-btn tool-btn--slot" type="button" data-panel="musicPanel" aria-label="Musique">
+                <span class="tool-icon-slot"> <img src="./assets/MUSIQUE.svg" alt=""></span>
+              </button>
+            </div>
+
+            <div class="panel-wrap">
+              <div class="tool-panel active" id="trimPanel">
+                <h2>COUPER</h2>
+                <p class="trim-help">Déplace la fenêtre blanche sur la timeline pour choisir l’extrait.</p>
+              </div>
+
+              <div class="tool-panel" id="textPanel">
+                <h2>SOUS-TITRES</h2>
+                <div class="choice-list choice-list--square">
+                  <button 
+                    class="choice-btn subtitle-choice active" 
+                    type="button" 
+                    data-text="" 
+                    data-style="none"
+                  >
+                    Aucun
+                  </button>                  
+                  <button class="choice-btn subtitle-choice" type="button" data-text="Mme Lepen à l'assemblée" data-style="style-1">Neutre</button>
+                  <button class="choice-btn subtitle-choice" type="button" data-text="Mme Lepen à l'assemblée" data-style="style-2">Impact</button>
+                  <button class="choice-btn subtitle-choice" type="button" data-text="Mme Lepen à l'assemblée" data-style="style-3">Fun</button>
+                </div>
+              </div>
+
+              <div class="tool-panel" id="musicPanel">
+                <h2>MUSIQUE</h2>
+                <div class="choice-list choice-list--square">
+                  <button class="choice-btn music-choice active" type="button" data-audio="">Aucune</button>
+                  <button class="choice-btn music-choice" type="button" data-audio="./assets/INSONAMIA.mp3">Insonamia</button>
+                  <button class="choice-btn music-choice" type="button" data-audio="./assets/Win-Again.mp3">Win Again</button>
+                  <button class="choice-btn music-choice" type="button" data-audio="./assets/Wii-Music.mp3">Wii Music</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+    <audio id="bgMusic" preload="auto"></audio>
+  </div>
+
+  <!-- PUBLISH -->
+  <div class="slide slide-publish" id="slide-11">
+    <section class="publish-page" id="publishPage">
+      <header class="publish-top-bar">
+        <button class="publish-top-link" type="button" id="publishBackBtn">EDIT</button>
+        <button class="publish-btn" id="publishActionBtn" type="button">PUBLIER</button>
+      </header>
+
+      <div class="publish-main">
+        <div class="publish-preview-wrap">
+          <div class="publish-phone-frame">
+            <div class="publish-video-shell">
+              <video id="publishPreviewVideo" class="publish-video-player" preload="metadata" playsinline muted>
+                <source src="./assets/dire_content.mp4" type="video/mp4">
+              </video>
+
+              <div class="publish-video-ui">
+                <div class="publish-time-preview" id="publishTimePreview">00:00 / 00:15</div>
+                <div class="publish-progress"><div class="publish-progress-fill" id="publishProgressFill"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="publish-form-block">
+          <h2 class="publish-section-title">DESCRIPTION</h2>
+          <div class="publish-textbox-frame">
+            <textarea id="publishDescription" class="publish-textarea" placeholder="Que veux-tu faire ressentir ?" maxlength="220" rows="5"></textarea>
+            <div class="publish-hashtag-hint">#fyp #politque #republique #assemblée</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="publish-overlay" id="publishOverlay" aria-hidden="true">
+        <div class="publish-overlay-card">
+          <p class="publish-overlay-kicker">CE QUE TU VIENS DE FAIRE</p>
+          <h3 class="publish-overlay-title">Tu n’as pas juste décrit la vidéo</h3>
+          <p class="publish-overlay-text">Tu as orienté sa lecture et influencé la manière dont elle sera reçue.</p>
+          <button class="publish-overlay-btn" id="publishOverlayBtn" type="button">CONTINUER</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- REAL OR FAKE INTRO -->
+  <div class="slide realfake-intro-slide" id="slide-12">
+    <section class="realfake-intro-screen">
+      <div class="realfake-intro-card">
+        <img src="./assets/rf_logo.svg" alt="Real or Fake" class="realfake-intro-logo">
+      </div>
+      <p class="realfake-intro-subtitle">Swipe selon ton instinct</p>
+      <button class="frame-btn realfake-start-btn" id="startRealFakeBtn" type="button">COMMENCER</button>
+    </section>
+  </div>
+
+  <!-- REAL OR FAKE GAME -->
+  <div class="slide realfake-game-slide" id="slide-13">
+    <section class="realfake-game-screen">
+      <header class="realfake-game-header">
+        <div class="realfake-game-title">
+          <span class="rf-title-real">ReaL</span>
+          <span class="rf-title-or">OR</span>
+          <span class="rf-title-arrow">↗</span>
+        </div>
+      </header>
+
+      <div class="realfake-game-board">
+        <div class="realfake-stack" id="realfakeStack">
+          <article class="realfake-card back-card" id="backCard">
+            <div class="realfake-card-shell">
+              <img src="./assets/macron_ski.jpg" alt="" class="realfake-card-image">
+              <div class="realfake-card-overlay"></div>
+              <div class="realfake-card-ui top-ui">
+                <span class="rf-card-top-label">ReaL</span>
+                <span class="rf-card-top-or">OR</span>
+                <span class="rf-card-top-arrow">↗</span>
+              </div>
+              <div class="realfake-card-ui bottom-ui">
+                <span class="rf-card-bottom-arrow">↙</span>
+                <span class="rf-card-bottom-label">FaKe</span>
+              </div>
+              <p class="realfake-card-caption">M. et Mme. Macron au ski.</p>
+            </div>
+          </article>
+
+          <article class="realfake-card active-card" id="activeRealFakeCard">
+            <div class="realfake-card-shell">
+              <img src="./assets/melenchon_vote.jpg" alt="" class="realfake-card-image">
+              <div class="realfake-card-overlay"></div>
+              <div class="realfake-card-ui top-ui">
+                <span class="rf-card-top-label">ReaL</span>
+                <span class="rf-card-top-or">OR</span>
+                <span class="rf-card-top-arrow">↗</span>
+              </div>
+              <div class="realfake-card-ui bottom-ui">
+                <span class="rf-card-bottom-arrow">↙</span>
+                <span class="rf-card-bottom-label">FaKe</span>
+              </div>
+              <p class="realfake-card-caption">M. Mélenchon a voté !</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="realfake-swipe-badge badge-real" id="badgeReal">REAL</div>
+      <div class="realfake-swipe-badge badge-fake" id="badgeFake">FAKE</div>
+    </section>
+  </div>
+
+</div>
+
+<script src="./js/script.js"></script>
+</body>
+</html>
