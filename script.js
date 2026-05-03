@@ -507,62 +507,48 @@ document.querySelectorAll(".ressentir-continue").forEach((btn) => {
 });
 
 /* =========================================================
-   EDITOR + PUBLISH — VERSION PROPRE
+   EDITOR — 1 VIDEO DE 60s / 1 FENÊTRE DE 15s
 ========================================================= */
 
 const mainVideo = document.getElementById("mainVideo");
 const playPauseBtn = document.getElementById("playPauseBtn");
 const playPauseIcon = document.getElementById("playPauseIcon");
-const editorNextBtn = document.getElementById("editorNextBtn");
 
 const subtitleOverlay = document.getElementById("subtitleOverlay");
-const publishSubtitlePreview = document.getElementById("publishSubtitlePreview");
-
 const bgMusic = document.getElementById("bgMusic");
 
-const trimWindows = Array.from(document.querySelectorAll(".trim-window"));
+const trimWindow = document.getElementById("trimWindow");
 const timelineTrack = document.getElementById("timelineTrack");
+const trimStartMinus = document.getElementById("trimStartMinus");
+const trimEndPlus = document.getElementById("trimEndPlus");
+
 const startTimeLabel = document.getElementById("startTimeLabel");
 const endTimeLabel = document.getElementById("endTimeLabel");
 
-const publishPage = document.getElementById("publishPage");
-const publishActionBtn = document.getElementById("publishActionBtn");
-const publishOverlay = document.getElementById("publishOverlay");
-const publishOverlayBtn = document.getElementById("publishOverlayBtn");
-const publishDescription = document.getElementById("publishDescription");
-const publishBackBtn = document.getElementById("publishBackBtn");
-const publishPreviewVideo = document.getElementById("publishPreviewVideo");
-const publishTimePreview = document.getElementById("publishTimePreview");
-const publishProgressFill = document.getElementById("publishProgressFill");
-
 const progressFill = document.getElementById("progressFill");
 const timeDisplay = document.getElementById("timeDisplay");
+
+const editorNextBtn = document.getElementById("editorNextBtn");
 
 /* =========================
    CONFIG
 ========================= */
 
-const CUT_DURATION = 5; // 5 secondes par box
-const TOTAL_CUTS = 3;
+const CUT_DURATION = 15;
+const STEP = 1;
 
 const editorState = {
-  videoDuration: 0,
-  currentCutIndex: 0,
-  cuts: [0, 5, 10],
-  trimWidthPercent: 0,
-  draggingTrimIndex: null,
+  videoDuration: 60,
+  trimStart: 0,
+  trimWidthPercent: 25,
+  isDragging: false,
   dragStartX: 0,
-  trimStartLeft: 0,
+  dragStartLeftPercent: 0,
   selectedMusicSrc: "",
-  selectedSubtitleText: subtitleOverlay ? subtitleOverlay.textContent : "",
-  selectedSubtitleClass: subtitleOverlay ? [...subtitleOverlay.classList].find(c => c.startsWith("style-")) || "style-1" : "style-1",
-  isCompositePlaying: false,
-  compositeMode: false,
-  compositeSegmentIndex: 0,
-  compositeStartTimestamp: 0,
-  compositeCurrentSegmentStart: 0
+  selectedSubtitleText: "",
+  selectedSubtitleClass: "none",
+  isPlayingSelection: false
 };
-
 
 /* =========================
    HELPERS
@@ -581,21 +567,24 @@ function formatTime(sec) {
 
 function formatTimelineLabel(sec) {
   const s = Math.max(0, Math.floor(sec));
-  return `0:00:${String(s).padStart(2, "0")}`;
+  const h = 0;
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
 }
 
-function getMaxCutStart() {
+function getMaxTrimStart() {
   return Math.max(0, editorState.videoDuration - CUT_DURATION);
 }
 
-function getCutStartPercent(startSec) {
-  if (!editorState.videoDuration || editorState.videoDuration <= CUT_DURATION) return 0;
-  return (startSec / editorState.videoDuration) * 100;
-}
-
-function getCutWidthPercent() {
+function getTrimWidthPercent() {
   if (!editorState.videoDuration) return 100;
   return (CUT_DURATION / editorState.videoDuration) * 100;
+}
+
+function getTrimLeftPercent() {
+  if (!editorState.videoDuration) return 0;
+  return (editorState.trimStart / editorState.videoDuration) * 100;
 }
 
 function setPlayIcon(isPlaying) {
@@ -614,6 +603,298 @@ function updateTimeUI(current, total) {
     progressFill.style.width = `${clamp(progress, 0, 100)}%`;
   }
 }
+
+function updateTrimUI() {
+  if (!trimWindow) return;
+
+  trimWindow.style.width = `${editorState.trimWidthPercent}%`;
+  trimWindow.style.left = `${getTrimLeftPercent()}%`;
+
+  if (startTimeLabel) {
+    startTimeLabel.textContent = formatTimelineLabel(editorState.trimStart);
+  }
+
+  if (endTimeLabel) {
+    endTimeLabel.textContent = formatTimelineLabel(editorState.trimStart + CUT_DURATION);
+  }
+}
+
+function stopMusic() {
+  if (!bgMusic) return;
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+}
+
+function playMusic() {
+  if (!bgMusic || !editorState.selectedMusicSrc) return;
+
+  const resolvedSrc = new URL(editorState.selectedMusicSrc, window.location.href).href;
+
+  if (bgMusic.src !== resolvedSrc) {
+    bgMusic.src = editorState.selectedMusicSrc;
+    bgMusic.load();
+  }
+
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(() => {});
+}
+
+function stopVideoSelection(resetTime = true) {
+  if (!mainVideo) return;
+
+  mainVideo.pause();
+  editorState.isPlayingSelection = false;
+  setPlayIcon(false);
+  stopMusic();
+
+  if (resetTime) {
+    mainVideo.currentTime = editorState.trimStart;
+    updateTimeUI(0, CUT_DURATION);
+  }
+}
+
+function playSelectedPart() {
+  if (!mainVideo) return;
+
+  stopVideoSelection(false);
+
+  mainVideo.currentTime = editorState.trimStart;
+  editorState.isPlayingSelection = true;
+  setPlayIcon(true);
+  updateTimeUI(0, CUT_DURATION);
+
+  if (editorState.selectedMusicSrc) {
+    playMusic();
+  }
+
+  mainVideo.play().catch(() => {});
+}
+
+function applySubtitle(text, style) {
+  if (!subtitleOverlay) return;
+
+  if (!text || style === "none") {
+    subtitleOverlay.textContent = "";
+    subtitleOverlay.className = "subtitle-overlay hidden";
+    return;
+  }
+
+  subtitleOverlay.textContent = text;
+  subtitleOverlay.className = `subtitle-overlay ${style}`;
+}
+
+/* =========================
+   VIDEO INIT
+========================= */
+
+if (mainVideo) {
+  mainVideo.muted = false;
+  mainVideo.volume = 1;
+
+  mainVideo.addEventListener("loadedmetadata", () => {
+    editorState.videoDuration = Math.floor(mainVideo.duration || 60);
+    editorState.trimWidthPercent = getTrimWidthPercent();
+    editorState.trimStart = 0;
+
+    updateTrimUI();
+    updateTimeUI(0, CUT_DURATION);
+
+    mainVideo.currentTime = 0;
+  });
+
+  mainVideo.addEventListener("timeupdate", () => {
+    if (!editorState.isPlayingSelection) return;
+
+    const trimEnd = editorState.trimStart + CUT_DURATION;
+    const localTime = clamp(mainVideo.currentTime - editorState.trimStart, 0, CUT_DURATION);
+
+    updateTimeUI(localTime, CUT_DURATION);
+
+    if (mainVideo.currentTime >= trimEnd) {
+      stopVideoSelection(true);
+    }
+  });
+
+  mainVideo.addEventListener("pause", () => {
+    if (!editorState.isPlayingSelection) {
+      setPlayIcon(false);
+    }
+  });
+}
+
+/* =========================
+   PLAY / PAUSE
+========================= */
+
+if (playPauseBtn) {
+  playPauseBtn.addEventListener("click", () => {
+    if (editorState.isPlayingSelection) {
+      stopVideoSelection(true);
+    } else {
+      playSelectedPart();
+    }
+  });
+}
+
+/* =========================
+   DRAG TIMELINE
+========================= */
+
+if (trimWindow && timelineTrack) {
+  trimWindow.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    editorState.isDragging = true;
+    editorState.dragStartX = e.clientX;
+    editorState.dragStartLeftPercent = getTrimLeftPercent();
+    trimWindow.classList.add("dragging");
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!editorState.isDragging) return;
+
+    const trackRect = timelineTrack.getBoundingClientRect();
+    const deltaPx = e.clientX - editorState.dragStartX;
+    const deltaPercent = (deltaPx / trackRect.width) * 100;
+
+    const maxLeftPercent = 100 - editorState.trimWidthPercent;
+    const nextLeftPercent = clamp(
+      editorState.dragStartLeftPercent + deltaPercent,
+      0,
+      maxLeftPercent
+    );
+
+    const nextStart = (nextLeftPercent / 100) * editorState.videoDuration;
+    editorState.trimStart = clamp(nextStart, 0, getMaxTrimStart());
+
+    updateTrimUI();
+
+    if (mainVideo && mainVideo.readyState >= 1) {
+      mainVideo.currentTime = editorState.trimStart;
+      updateTimeUI(0, CUT_DURATION);
+    }
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (!editorState.isDragging) return;
+    editorState.isDragging = false;
+    trimWindow.classList.remove("dragging");
+  });
+}
+
+/* =========================
+   ARROWS
+========================= */
+
+if (trimStartMinus) {
+  trimStartMinus.addEventListener("click", () => {
+    editorState.trimStart = clamp(editorState.trimStart - STEP, 0, getMaxTrimStart());
+    updateTrimUI();
+
+    if (mainVideo && mainVideo.readyState >= 1) {
+      mainVideo.currentTime = editorState.trimStart;
+      updateTimeUI(0, CUT_DURATION);
+    }
+  });
+}
+
+if (trimEndPlus) {
+  trimEndPlus.addEventListener("click", () => {
+    editorState.trimStart = clamp(editorState.trimStart + STEP, 0, getMaxTrimStart());
+    updateTrimUI();
+
+    if (mainVideo && mainVideo.readyState >= 1) {
+      mainVideo.currentTime = editorState.trimStart;
+      updateTimeUI(0, CUT_DURATION);
+    }
+  });
+}
+
+/* =========================
+   TOOL PANELS
+========================= */
+
+document.querySelectorAll(".tool-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const panelId = btn.dataset.panel;
+    if (!panelId) return;
+
+    document.querySelectorAll(".tool-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".tool-panel").forEach((panel) => panel.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add("active");
+  });
+});
+
+/* =========================
+   SUBTITLES
+========================= */
+
+document.querySelectorAll(".subtitle-choice").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".subtitle-choice").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    editorState.selectedSubtitleText = btn.dataset.text || "";
+    editorState.selectedSubtitleClass = btn.dataset.style || "none";
+
+    applySubtitle(editorState.selectedSubtitleText, editorState.selectedSubtitleClass);
+  });
+});
+
+/* =========================
+   MUSIC
+========================= */
+
+document.querySelectorAll(".music-choice").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".music-choice").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    editorState.selectedMusicSrc = btn.dataset.audio || "";
+
+    stopMusic();
+
+    if (editorState.isPlayingSelection && editorState.selectedMusicSrc) {
+      playMusic();
+    }
+  });
+});
+
+/* =========================
+   NEXT BUTTON
+========================= */
+
+if (editorNextBtn) {
+  editorNextBtn.addEventListener("click", () => {
+    stopVideoSelection(true);
+
+    if (typeof goToSlide === "function") {
+      goToSlide(11);
+    }
+  });
+}
+/* =========================
+   PUBLISH ELEMENTS
+========================= */
+
+const publishPage = document.getElementById("publishPage");
+const publishBackBtn = document.getElementById("publishBackBtn");
+const publishActionBtn = document.getElementById("publishActionBtn");
+const publishOverlay = document.getElementById("publishOverlay");
+const publishOverlayBtn = document.getElementById("publishOverlayBtn");
+const publishDescription = document.getElementById("publishDescription");
+
+const publishPreviewVideo = document.getElementById("publishPreviewVideo");
+const publishSubtitlePreview = document.getElementById("publishSubtitlePreview");
+const publishTimePreview = document.getElementById("publishTimePreview");
+const publishProgressFill = document.getElementById("publishProgressFill");
+
+/* =========================
+   PUBLISH HELPERS
+========================= */
 
 function updatePublishTimeUI(current, total) {
   if (publishTimePreview) {
@@ -638,377 +919,98 @@ function syncPublishPreviewSource() {
   }
 }
 
-function updateTrimWidthPercent() {
-  editorState.trimWidthPercent = getCutWidthPercent();
-}
+function applySubtitleToPublish() {
+  if (!publishSubtitlePreview) return;
 
-function updateTrimUI() {
-  if (!trimWindows.length) return;
-
-  trimWindows.forEach((windowEl, index) => {
-    const startSec = editorState.cuts[index] ?? 0;
-    const leftPercent = getCutStartPercent(startSec);
-
-    windowEl.style.left = `${leftPercent}%`;
-    windowEl.style.width = `${editorState.trimWidthPercent}%`;
-    windowEl.classList.toggle("active", index === editorState.currentCutIndex);
-  });
-
-  const currentStart = editorState.cuts[editorState.currentCutIndex] ?? 0;
-  const currentEnd = currentStart + CUT_DURATION;
-
-  if (startTimeLabel) startTimeLabel.textContent = formatTimelineLabel(currentStart);
-  if (endTimeLabel) endTimeLabel.textContent = formatTimelineLabel(currentEnd);
-}
-
-function updateCurrentTrimFromState() {
-  updateTrimUI();
-}
-
-function saveCurrentCutFromPercent(leftPercent) {
-  const maxStart = getMaxCutStart();
-  const startSec = (leftPercent / 100) * editorState.videoDuration;
-  editorState.cuts[editorState.currentCutIndex] = clamp(startSec, 0, maxStart);
-}
-
-function playSelectedMusic() {
-  if (!bgMusic) return;
-
-  if (!editorState.selectedMusicSrc) {
-    bgMusic.pause();
-    bgMusic.currentTime = 0;
+  if (!editorState.selectedSubtitleText || editorState.selectedSubtitleClass === "none") {
+    publishSubtitlePreview.textContent = "";
+    publishSubtitlePreview.className = "publish-subtitle-preview hidden";
     return;
   }
 
-  if (bgMusic.src !== new URL(editorState.selectedMusicSrc, window.location.href).href) {
-    bgMusic.src = editorState.selectedMusicSrc;
-    bgMusic.load();
-  }
-
-  bgMusic.currentTime = 0;
-  bgMusic.volume = 1;
-  bgMusic.play().catch(() => {});
+  publishSubtitlePreview.textContent = editorState.selectedSubtitleText;
+  publishSubtitlePreview.className = `publish-subtitle-preview ${editorState.selectedSubtitleClass}`;
 }
 
-function stopSelectedMusic() {
-  if (!bgMusic) return;
-  bgMusic.pause();
-  bgMusic.currentTime = 0;
-}
+function stopPublishPreview(reset = true) {
+  if (!publishPreviewVideo) return;
 
-function playCurrentCutPreview() {
-  if (!mainVideo) return;
+  publishPreviewVideo.pause();
 
-  editorState.compositeMode = false;
-  editorState.isCompositePlaying = false;
-
-  const currentStart = editorState.cuts[editorState.currentCutIndex] ?? 0;
-  mainVideo.currentTime = currentStart;
-  mainVideo.play().catch(() => {});
-  setPlayIcon(true);
-
-  if (editorState.selectedMusicSrc) {
-    playSelectedMusic();
+  if (reset) {
+    publishPreviewVideo.currentTime = editorState.trimStart;
+    updatePublishTimeUI(0, CUT_DURATION);
   }
 }
 
-function startCompositePlayback(videoEl, options = {}) {
-  const isPublish = !!options.publish;
-  const totalDuration = CUT_DURATION * TOTAL_CUTS;
-  const cutsReady = editorState.cuts.every(c => typeof c === "number");
+function playPublishPreview() {
+  if (!publishPreviewVideo) return;
 
-  if (!cutsReady || !videoEl) return;
-
-  videoEl.pause();
-
-  editorState.compositeStartTimestamp = performance.now();
-  editorState.compositeSegmentIndex = 0;
-
-  const firstStart = editorState.cuts[0];
-  videoEl.currentTime = firstStart;
-
-  if (isPublish) {
-    updatePublishTimeUI(0, totalDuration);
-  } else {
-    editorState.compositeMode = true;
-    editorState.isCompositePlaying = true;
-    updateTimeUI(0, totalDuration);
-    setPlayIcon(true);
-
-    if (editorState.selectedMusicSrc) {
-      playSelectedMusic();
-    }
-  }
-
-  videoEl.play().catch(() => {});
-}
-
-function handleCompositeLoop(videoEl, isPublish = false) {
-  if (!videoEl) return;
-
-  const totalDuration = CUT_DURATION * TOTAL_CUTS;
-  const elapsed = (performance.now() - editorState.compositeStartTimestamp) / 1000;
-  const clampedElapsed = clamp(elapsed, 0, totalDuration);
-
-  const segmentIndex = Math.min(
-    TOTAL_CUTS - 1,
-    Math.floor(clampedElapsed / CUT_DURATION)
-  );
-
-  const segmentElapsed = clampedElapsed - segmentIndex * CUT_DURATION;
-  const segmentStart = editorState.cuts[segmentIndex];
-
-  if (typeof segmentStart !== "number") return;
-
-  const targetTime = segmentStart + segmentElapsed;
-
-  if (Math.abs(videoEl.currentTime - targetTime) > 0.12) {
-    videoEl.currentTime = targetTime;
-  }
-
-  if (isPublish) {
-    updatePublishTimeUI(clampedElapsed, totalDuration);
-  } else {
-    updateTimeUI(clampedElapsed, totalDuration);
-  }
-
-  if (clampedElapsed >= totalDuration) {
-    videoEl.pause();
-    videoEl.currentTime = editorState.cuts[0];
-
-    if (isPublish) {
-      updatePublishTimeUI(totalDuration, totalDuration);
-    } else {
-      editorState.isCompositePlaying = false;
-      editorState.compositeMode = false;
-      stopSelectedMusic();
-      setPlayIcon(false);
-      updateTimeUI(totalDuration, totalDuration);
-    }
-  }
+  stopPublishPreview(false);
+  publishPreviewVideo.currentTime = editorState.trimStart;
+  updatePublishTimeUI(0, CUT_DURATION);
+  publishPreviewVideo.play().catch(() => {});
 }
 
 /* =========================
-   INIT VIDEO
+   PUBLISH VIDEO
 ========================= */
 
-if (mainVideo) {
-  mainVideo.muted = false;
-  mainVideo.volume = 1;
-
-  mainVideo.addEventListener("loadedmetadata", () => {
-  editorState.videoDuration = mainVideo.duration || 15;
-  updateTrimWidthPercent();
-
-  const maxStart = getMaxCutStart();
-  editorState.cuts = [
-    0,
-    clamp(5, 0, maxStart),
-    clamp(10, 0, maxStart)
-  ];
-
-  updateTrimUI();
-  updateTimeUI(0, CUT_DURATION * TOTAL_CUTS);
-  syncPublishPreviewSource();
-});
-
-  mainVideo.addEventListener("timeupdate", () => {
-    if (editorState.compositeMode) return;
-
-    const currentStart = editorState.cuts[editorState.currentCutIndex] ?? 0;
-    const currentEnd = currentStart + CUT_DURATION;
-
-    if (mainVideo.currentTime >= currentEnd) {
-      mainVideo.pause();
-      mainVideo.currentTime = currentStart;
-      setPlayIcon(false);
-      stopSelectedMusic();
-    }
-
-    const localTime = clamp(mainVideo.currentTime - currentStart, 0, CUT_DURATION);
-    updateTimeUI(localTime, CUT_DURATION);
+if (publishPreviewVideo) {
+  publishPreviewVideo.addEventListener("loadedmetadata", () => {
+    publishPreviewVideo.currentTime = editorState.trimStart || 0;
+    updatePublishTimeUI(0, CUT_DURATION);
   });
 
-  mainVideo.addEventListener("play", () => {
-    if (!editorState.compositeMode) setPlayIcon(true);
-  });
+  publishPreviewVideo.addEventListener("timeupdate", () => {
+    const trimEnd = editorState.trimStart + CUT_DURATION;
+    const localTime = clamp(
+      publishPreviewVideo.currentTime - editorState.trimStart,
+      0,
+      CUT_DURATION
+    );
 
-  mainVideo.addEventListener("pause", () => {
-    if (!editorState.compositeMode) setPlayIcon(false);
-  });
-}
+    updatePublishTimeUI(localTime, CUT_DURATION);
 
-/* =========================
-   PLAY / PAUSE
-========================= */
-
-if (playPauseBtn && mainVideo) {
-  playPauseBtn.addEventListener("click", () => {
-    const cutsReady = editorState.cuts.every(c => typeof c === "number");
-
-    if (!cutsReady) return;
-
-    if (editorState.isCompositePlaying) {
-      editorState.isCompositePlaying = false;
-      editorState.compositeMode = false;
-      mainVideo.pause();
-      stopSelectedMusic();
-      setPlayIcon(false);
-      updateTimeUI(0, CUT_DURATION * TOTAL_CUTS);
-    } else {
-      startCompositePlayback(mainVideo, { publish: false });
+    if (publishPreviewVideo.currentTime >= trimEnd) {
+      publishPreviewVideo.pause();
+      publishPreviewVideo.currentTime = editorState.trimStart;
+      updatePublishTimeUI(CUT_DURATION, CUT_DURATION);
     }
   });
 }
 
 /* =========================
-   TOOL PANELS
-========================= */
-
-document.querySelectorAll(".tool-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const panelId = btn.dataset.panel;
-    if (!panelId) return;
-
-    document.querySelectorAll(".tool-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".tool-panel").forEach((panel) => panel.classList.remove("active"));
-
-    btn.classList.add("active");
-    const panel = document.getElementById(panelId);
-    if (panel) panel.classList.add("active");
-  });
-});
-
-/* =========================
-   SUBTITLES
-========================= */
-
-document.querySelectorAll(".subtitle-choice").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".subtitle-choice").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    const text = btn.dataset.text || "";
-    const style = btn.dataset.style || "style-1";
-
-    editorState.selectedSubtitleText = text;
-    editorState.selectedSubtitleClass = style;
-
-    if (style === "none") {
-    subtitleOverlay.textContent = "";
-    subtitleOverlay.className = "subtitle-overlay hidden";
-    } else {
-    subtitleOverlay.textContent = text;
-    subtitleOverlay.className = `subtitle-overlay ${style}`;
-    }
-  });
-});
-
-/* =========================
-   MUSIC
-========================= */
-
-document.querySelectorAll(".music-choice").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".music-choice").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    editorState.selectedMusicSrc = btn.dataset.audio || "";
-
-    if (!editorState.selectedMusicSrc) {
-      stopSelectedMusic();
-      return;
-    }
-
-    bgMusic.src = editorState.selectedMusicSrc;
-    bgMusic.load();
-
-    if (!mainVideo.paused || editorState.isCompositePlaying) {
-      playSelectedMusic();
-    }
-  });
-});
-
-/* =========================
-   TIMELINE / TRIM
-========================= */
-
-if (trimWindows.length && timelineTrack) {
-  trimWindows.forEach((windowEl, index) => {
-    windowEl.addEventListener("mousedown", (e) => {
-      editorState.currentCutIndex = index;
-      editorState.draggingTrimIndex = index;
-      editorState.dragStartX = e.clientX;
-      editorState.trimStartLeft = getCutStartPercent(editorState.cuts[index] ?? 0);
-
-      trimWindows.forEach((el) => el.classList.remove("dragging"));
-      windowEl.classList.add("dragging");
-
-      updateTrimUI();
-    });
-  });
-
-  window.addEventListener("mousemove", (e) => {
-    if (editorState.draggingTrimIndex === null) return;
-
-    const trackRect = timelineTrack.getBoundingClientRect();
-    const deltaPx = e.clientX - editorState.dragStartX;
-    const deltaPercent = (deltaPx / trackRect.width) * 100;
-
-    const maxLeft = 100 - editorState.trimWidthPercent;
-    const nextLeftPercent = clamp(editorState.trimStartLeft + deltaPercent, 0, maxLeft);
-
-    saveCurrentCutFromPercent(nextLeftPercent);
-    updateTrimUI();
-  });
-
-  window.addEventListener("mouseup", () => {
-    if (editorState.draggingTrimIndex === null) return;
-
-    trimWindows.forEach((el) => el.classList.remove("dragging"));
-    editorState.draggingTrimIndex = null;
-  });
-}
-
-/* =========================
-   NEXT BUTTON
+   GO TO PUBLISH FROM EDITOR
 ========================= */
 
 if (editorNextBtn) {
   editorNextBtn.addEventListener("click", () => {
-    mainVideo.pause();
-    setPlayIcon(false);
-    stopSelectedMusic();
-
+    stopVideoSelection(true);
     syncPublishPreviewSource();
+    applySubtitleToPublish();
 
-    if (publishSubtitlePreview) {
-      publishSubtitlePreview.textContent = editorState.selectedSubtitleText || "";
-      publishSubtitlePreview.className = `publish-subtitle-preview ${editorState.selectedSubtitleClass}`;
+    if (typeof goToSlide === "function") {
+      goToSlide(11);
     }
 
-    goToSlide(11);
-
     setTimeout(() => {
-      if (publishPreviewVideo) {
-        startCompositePlayback(publishPreviewVideo, { publish: true });
-      }
+      playPublishPreview();
     }, 120);
   });
 }
 
 /* =========================
-   PUBLISH
+   PUBLISH ACTIONS
 ========================= */
 
 if (publishBackBtn) {
   publishBackBtn.addEventListener("click", () => {
-    if (publishPreviewVideo) {
-      publishPreviewVideo.pause();
-      publishPreviewVideo.currentTime = 0;
-      updatePublishTimeUI(0, CUT_DURATION * TOTAL_CUTS);
+    stopPublishPreview(true);
+
+    if (typeof goToSlide === "function") {
+      goToSlide(10);
     }
-    goToSlide(10);
   });
 }
 
@@ -1024,11 +1026,11 @@ if (publishOverlayBtn && publishOverlay) {
     publishOverlay.classList.remove("is-visible");
     publishOverlay.setAttribute("aria-hidden", "true");
 
-    if (publishPreviewVideo) {
-      publishPreviewVideo.pause();
-    }
+    stopPublishPreview(false);
 
-    goToSlide(12);
+    if (typeof goToSlide === "function") {
+      goToSlide(12);
+    }
   });
 }
 
@@ -1041,27 +1043,6 @@ if (publishDescription && publishPage) {
     publishPage.classList.remove("keyboard-open");
   });
 }
-
-/* =========================
-   LOOP RAF FOR COMPOSITE PLAYBACK
-========================= */
-
-function animationLoop() {
-  if (editorState.isCompositePlaying && mainVideo) {
-    handleCompositeLoop(mainVideo, false);
-  }
-
-  if (publishPreviewVideo && !publishPreviewVideo.paused && goToSlide) {
-    const publishSlide = document.getElementById("slide-11");
-    if (publishSlide && publishSlide.classList.contains("active")) {
-      handleCompositeLoop(publishPreviewVideo, true);
-    }
-  }
-
-  requestAnimationFrame(animationLoop);
-}
-
-
 /* =========================
    REAL OR FAKE INTRO
 ========================= */
@@ -1070,26 +1051,278 @@ const startRealFakeBtn = document.getElementById("startRealFakeBtn");
 if (startRealFakeBtn) {
   startRealFakeBtn.addEventListener("click", () => {
     goToSlide(13);
+    initRealFakeGame();
+
   });
 }
 
-/* =========================
-   INIT
-========================= */
+document.addEventListener("DOMContentLoaded", () => {
+  const stack = document.getElementById("realfakeCardsStack");
+  const progressEl = document.getElementById("realfakeProgress");
+  const scoreEl = document.getElementById("realfakeScore");
+  const resultScreen = document.getElementById("realfakeResultScreen");
+  const resultTitle = document.getElementById("realfakeResultTitle");
+  const resultText = document.getElementById("realfakeResultText");
+  const replayBtn = document.getElementById("realfakeReplayBtn");
 
-function init() {
-  prepareAllVideos();
+  if (!stack) return;
 
-  slides.forEach((slide, i) => {
-    slide.classList.remove("active", "prev");
-    if (i === 0) slide.classList.add("active");
-  });
+  let cards = [];
+  let currentIndex = 0;
+  let score = 0;
+  let isAnimating = false;
 
-  currentSlide = 0;
-  feedVisible = false;
+  function initRefs() {
+    cards = Array.from(stack.querySelectorAll(".realfake-card"));
+  }
 
-  pauseAllVideos();
+  function updateHUD() {
+    const total = cards.length;
+    const displayIndex = currentIndex < total ? currentIndex + 1 : total;
+    if (progressEl) progressEl.textContent = `${displayIndex} / ${total}`;
+    if (scoreEl) scoreEl.textContent = String(score);
+  }
+
+  function resetCard(card) {
+    card.style.transition = "none";
+    card.style.opacity = "0";
+    card.style.pointerEvents = "none";
+    card.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
+
+    const realStamp = card.querySelector(".realfake-stamp.real");
+    const fakeStamp = card.querySelector(".realfake-stamp.fake");
+
+    if (realStamp) {
+      realStamp.style.opacity = "0";
+      realStamp.style.transform = "rotate(-10deg) scale(.9)";
+    }
+    if (fakeStamp) {
+      fakeStamp.style.opacity = "0";
+      fakeStamp.style.transform = "rotate(10deg) scale(.9)";
+    }
+  }
+
+  function renderStack() {
+    cards.forEach((card, index) => {
+      resetCard(card);
+      card.style.zIndex = String(cards.length - index);
+
+      if (index < currentIndex) {
+        card.style.opacity = "0";
+        card.style.pointerEvents = "none";
+        card.style.transform = "translateY(30px) scale(.92)";
+      } else if (index === currentIndex) {
+        card.style.opacity = "1";
+        card.style.pointerEvents = "auto";
+        card.style.transform = "translateY(0) scale(1)";
+      } else if (index === currentIndex + 1) {
+        card.style.opacity = "0.72";
+        card.style.transform = "translateY(10px) scale(.965)";
+      } else if (index === currentIndex + 2) {
+        card.style.opacity = "0.42";
+        card.style.transform = "translateY(18px) scale(.93)";
+      } else {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(22px) scale(.9)";
+      }
+    });
+
+    attachDragToTopCard();
+    updateHUD();
+  }
+
+  function endGame() {
+    const total = cards.length;
+    const ratio = total > 0 ? score / total : 0;
+
+    if (ratio === 1) {
+      resultTitle.textContent = "Score parfait.";
+      resultText.textContent = "Tu as parfaitement repéré les faux et les vrais. Ton regard critique est très solide.";
+    } else if (ratio >= 0.66) {
+      resultTitle.textContent = "Bien joué.";
+      resultText.textContent = "Tu repères déjà beaucoup de signaux. Mais certains contenus restent très crédibles visuellement.";
+    } else if (ratio >= 0.33) {
+      resultTitle.textContent = "Tu t’es fait piéger plusieurs fois.";
+      resultText.textContent = "C’est normal. Les contenus manipulés marchent justement parce qu’ils imitent très bien le réel.";
+    } else {
+      resultTitle.textContent = "Tu t’es bien fait piéger.";
+      resultText.textContent = "Voir ne suffit plus. Sur les réseaux, une image crédible peut être entièrement fabriquée.";
+    }
+
+    resultScreen.classList.add("is-visible");
+  }
+
+  function validateChoice(direction) {
+    if (isAnimating) return;
+
+    const card = cards[currentIndex];
+    if (!card) return;
+
+    isAnimating = true;
+
+    const expected = card.dataset.answer;
+    const choice = direction === "right" ? "real" : "fake";
+
+    if (choice === expected) {
+      score += 1;
+    }
+
+    const flyX = direction === "right" ? window.innerWidth * 1.1 : -window.innerWidth * 1.1;
+    const rotate = direction === "right" ? 18 : -18;
+
+    card.style.transition = "transform 0.42s ease, opacity 0.42s ease";
+    card.style.transform = `translateX(${flyX}px) rotate(${rotate}deg)`;
+    card.style.opacity = "0";
+
+    setTimeout(() => {
+      currentIndex += 1;
+      isAnimating = false;
+
+      if (currentIndex >= cards.length) {
+        updateHUD();
+        endGame();
+      } else {
+        renderStack();
+      }
+    }, 430);
+  }
+
+  function attachDragToTopCard() {
+    const card = cards[currentIndex];
+    if (!card) return;
+
+    let startX = 0;
+    let startY = 0;
+    let dx = 0;
+    let dy = 0;
+    let dragging = false;
+
+    const realStamp = card.querySelector(".realfake-stamp.real");
+    const fakeStamp = card.querySelector(".realfake-stamp.fake");
+
+    function onPointerDown(e) {
+      if (isAnimating) return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+      dy = 0;
+      card.style.transition = "none";
+      if (card.setPointerCapture) card.setPointerCapture(e.pointerId);
+    }
+
+    function onPointerMove(e) {
+      if (!dragging || isAnimating) return;
+
+      dx = e.clientX - startX;
+      dy = e.clientY - startY;
+
+      const rotate = dx * 0.05;
+      card.style.transform = `translateX(${dx}px) translateY(${dy * 0.12}px) rotate(${rotate}deg)`;
+
+      const realOpacity = Math.max(0, Math.min(dx / 120, 1));
+      const fakeOpacity = Math.max(0, Math.min((-dx) / 120, 1));
+
+      if (realStamp) {
+        realStamp.style.opacity = String(realOpacity);
+        realStamp.style.transform = `rotate(-10deg) scale(${0.9 + realOpacity * 0.15})`;
+      }
+
+      if (fakeStamp) {
+        fakeStamp.style.opacity = String(fakeOpacity);
+        fakeStamp.style.transform = `rotate(10deg) scale(${0.9 + fakeOpacity * 0.15})`;
+      }
+    }
+
+    function onPointerUp() {
+      if (!dragging || isAnimating) return;
+      dragging = false;
+
+      const threshold = 110;
+
+      if (dx > threshold) {
+        removeListeners();
+        validateChoice("right");
+        return;
+      }
+
+      if (dx < -threshold) {
+        removeListeners();
+        validateChoice("left");
+        return;
+      }
+
+      card.style.transition = "transform 0.25s ease";
+      card.style.transform = "translateX(0) translateY(0) rotate(0deg)";
+
+      if (realStamp) {
+        realStamp.style.opacity = "0";
+        realStamp.style.transform = "rotate(-10deg) scale(.9)";
+      }
+
+      if (fakeStamp) {
+        fakeStamp.style.opacity = "0";
+        fakeStamp.style.transform = "rotate(10deg) scale(.9)";
+      }
+    }
+
+    function removeListeners() {
+      card.removeEventListener("pointerdown", onPointerDown);
+      card.removeEventListener("pointermove", onPointerMove);
+      card.removeEventListener("pointerup", onPointerUp);
+      card.removeEventListener("pointercancel", onPointerUp);
+    }
+
+    card.addEventListener("pointerdown", onPointerDown);
+    card.addEventListener("pointermove", onPointerMove);
+    card.addEventListener("pointerup", onPointerUp);
+    card.addEventListener("pointercancel", onPointerUp);
+  }
+
+  function initGame() {
+    initRefs();
+    currentIndex = 0;
+    score = 0;
+    isAnimating = false;
+
+    if (resultScreen) {
+      resultScreen.classList.remove("is-visible");
+    }
+
+    renderStack();
+  }
+
+  if (replayBtn) {
+    replayBtn.addEventListener("click", initGame);
+  }
+
+  initGame();
+});
+
+const finishBtn = document.getElementById("realfakeFinishBtn");
+const endRestartBtn = document.getElementById("endRestartBtn");
+
+function goToEndSlide() {
+  const slide13 = document.getElementById("slide-13");
+  const slide14 = document.getElementById("slide-14");
+
+  if (resultScreen) resultScreen.classList.remove("is-visible");
+  if (slide13) slide13.classList.remove("active");
+  if (slide14) slide14.classList.add("active");
 }
 
-init();
+if (finishBtn) {
+  finishBtn.addEventListener("click", goToEndSlide);
+}
 
+if (endRestartBtn) {
+  endRestartBtn.addEventListener("click", () => {
+    const slide13 = document.getElementById("slide-13");
+    const slide14 = document.getElementById("slide-14");
+
+    if (slide14) slide14.classList.remove("active");
+    if (slide13) slide13.classList.add("active");
+
+    initGame();
+  });
+}
