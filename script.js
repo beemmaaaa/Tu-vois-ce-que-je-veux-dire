@@ -422,8 +422,8 @@ function toggleLike(el) {
   const img = el.querySelector("img");
   if (img) {
     img.src = el.classList.contains("liked")
-      ? "./assets/LIKE_red.svg"
-      : "./assets/LIKE.svg";
+      ? "./LIKE_red.svg"
+      : "./LIKE.svg";
   }
 
   el.style.transform = "scale(1.15)";
@@ -589,7 +589,7 @@ function getTrimLeftPercent() {
 
 function setPlayIcon(isPlaying) {
   if (!playPauseIcon) return;
-  playPauseIcon.src = isPlaying ? "./assets/pause.svg" : "./assets/play.svg";
+  playPauseIcon.src = isPlaying ? "./pause.svg" : "./play.svg";
   playPauseIcon.alt = isPlaying ? "Pause" : "Lecture";
 }
 
