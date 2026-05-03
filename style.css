@@ -903,7 +903,7 @@ video {
   overflow: hidden;
   background:
     linear-gradient(rgba(0, 0, 0, .12), rgba(0, 0, 0, .12)),
-    url("./assets/timeline-thumb.jpg") center/cover no-repeat;
+    url("./timeline-thumb.jpg") center/cover no-repeat;
   background-color: #27001c;
 }
 
